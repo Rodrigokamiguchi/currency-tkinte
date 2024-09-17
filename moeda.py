@@ -2,74 +2,75 @@ import tkinter as tk
 from tkinter import messagebox
 import requests
 
-def obter_taxa(moeda_base, moeda_destino):
+def get_exchange_rate(base_currency, target_currency):
     try:
-        url = f"https://api.exchangerate-api.com/v4/latest/{moeda_base}"
+        url = f"https://api.exchangerate-api.com/v4/latest/{base_currency}"
         response = requests.get(url)
         response.raise_for_status()
-        dados = response.json()
+        data = response.json()
 
-        #verificar se a moeda está presente a resposta
-        if moeda_destino not in dados['rates']:
+        # Check if the target currency is present in the response
+        if target_currency not in data['rates']:
             return None
 
-        return dados['rates'][moeda_destino]
+        return data['rates'][target_currency]
     except requests.RequestException as e:
-        messagebox.showerror("Erro!", f"erro ao obter a taxa de câmbio: {e}")
+        messagebox.showerror("Error!", f"Error getting exchange rate: {e}")
         return None
     except KeyError:
-       messagebox.showerror("Erro!", "Erro ao processar a resposta da API.")
-       return None
-    
-def converter_valor(valor, taxa):
-    return valor * taxa
+        messagebox.showerror("Error!", "Error processing the API response.")
+        return None
 
-def exibir_resultados(valor, taxa, valor_convertido, moeda_destino):
-    resultado = (
-        f"Valor Original: R$ {valor:.2f}"
-        f"\nTaxa de Conversão: {taxa:.2f}"
-        f"\nValor convertido: {moeda_destino} {valor_convertido:.2f}"
+def convert_value(value, rate):
+    return value * rate
+
+def display_results(value, rate, converted_value, target_currency):
+    result = (
+        f"Original Amount: R$ {value:.2f}\n"
+        f"Exchange Rate: {rate:.2f}\n"
+        f"Converted Value: {target_currency} {converted_value:.2f}"
     )
-    label_resultado.config(text=resultado)
+    label_result.config(text=result)  # Update the display with the result
 
-def calcular():
+def calculate():
     try:
-        valor = float(entry_valor.get())
-        moeda_destino = entry_moeda.get().upper()
+        value = float(entry_value.get())
+        target_currency = entry_currency.get().upper()
 
-        moeda_base = "BRL"
-        taxa = obter_taxa(moeda_base, moeda_destino)
+        base_currency = "BRL"
+        rate = get_exchange_rate(base_currency, target_currency)
 
-        if taxa:
-            valor_convertido = converter_valor(valor, taxa)
-            exibir_resultados(valor, taxa, valor_convertido, moeda_destino)
+        if rate:
+            converted_value = convert_value(value, rate)
+            display_results(value, rate, converted_value, target_currency)
         else:
-            messagebox.showwarning("Aviso", "Nãoo foi possivel obter a taxa de câmbio. Tente novamente mais tarde.")
-            label_resultado.config(text="Erro: Taxa de câmbio não encontrada")
+            messagebox.showwarning("Warning", "Could not get the exchange rate. Please try again later.")
+            label_result.config(text="Error: Exchange rate not found.")
 
     except ValueError:
-        messagebox.showerror("Erro", "Entrada invalida! Por favor, insira um valor númerico.")
-        label_resultado.config(texto="Erro: Valor de entrada inválido.")
+        messagebox.showerror("Error", "Invalid input! Please enter a numeric value.")
+        label_result.config(text="Error: Invalid input value.")
 
 def main():
-    global entry_valor, entry_moeda, label_resultado
+    global entry_value, entry_currency, label_result
 
     root = tk.Tk()
-    root.title("Conversor de Moeda")
+    root.title("Currency Converter")
 
-    tk.Label(root, text="Informe o valor do produto em reais: R$  ").pack(pady=5)
-    entry_valor= tk.Entry(root)
-    entry_valor.pack(pady=5)
+    tk.Label(root, text="Enter the product value in BRL: R$ ").pack(pady=5)
+    entry_value = tk.Entry(root)
+    entry_value.pack(pady=5)
 
-    tk.Label(root, text="Informe o código da moeda extrangeira (ex.: USD, EUR, GBP ...): ").pack(pady=5)
-    entry_moeda = tk.Entry(root)
-    entry_moeda.pack(pady=5)
+    tk.Label(root, text="Enter the target currency code (e.g., USD, EUR, GBP ...): ").pack(pady=5)
+    entry_currency = tk.Entry(root)
+    entry_currency.pack(pady=5)
 
-    tk.Button(root, text="Converter", command=calcular).pack(pady=5)
-    tk.Button(root, text="Sair", command=root.quit).pack(pady=5)
+    tk.Button(root, text="Convert", command=calculate).pack(pady=5)
+    tk.Button(root, text="Exit", command=root.quit).pack(pady=5)
 
-    label_resultado = tk.Label(root, text="", justify="left", anchor="w", padx=10)
-    label_resultado.pack(pady=10)
+    # Label to display the results
+    label_result = tk.Label(root, text="", justify="left", anchor="w", padx=10)
+    label_result.pack(pady=10)
 
     root.mainloop()
 
